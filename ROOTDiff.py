@@ -83,30 +83,72 @@ def diff_graph_asym_errors(graph1, graph2):
 
 def diff_histos(histo1, histo2):
     logging.debug("checking %s", histo1.GetName())
+    
+    lines = []
+
     if (histo1.GetNbinsX() != histo2.GetNbinsX()):
-        print "< {} nbins = {}".format(abs_name(histo1), histo1.GetNbinsX())
-        print "> {} nbins = {}".format(abs_name(histo2), histo2.GetNbinsX())
+        lines.append("< nbins = {}".format(histo1.GetNbinsX()))
+        lines.append("> nbins = {}".format(histo2.GetNbinsX()))
+        
+        
     for ibin in xrange(1, (histo1.GetNbinsX() + 1)):
         if histo1.GetBinLowEdge(ibin) != histo2.GetBinLowEdge(ibin):
-            print "< {} different binning (bin {} = {})".format(abs_name(histo1), ibin,
-                                                                histo1.GetBinLowEdge(ibin))
-            print "> {} different binning (bin {} = {})".format(abs_name(histo2), ibin,
-                                                                histo2.GetBinLowEdge(ibin))
-            return False
+            lines.append("< different binning (bin {} = {})".format(ibin, histo1.GetBinLowEdge(ibin)))
+            lines.append("> different binning (bin {} = {})".format(ibin, histo2.GetBinLowEdge(ibin)))
+
+    bins_different = []
     for ibin in xrange(1, (histo1.GetNbinsX() + 1)):
         if histo1.GetBinContent(ibin) != histo2.GetBinContent(ibin):
-            print "< {} different content (bin {} = {})".format(abs_name(histo1), ibin,
-                                                                histo1.GetBinContent(ibin))
-            print "> {} different content (bin {} = {})".format(abs_name(histo2), ibin,
-                                                                histo2.GetBinContent(ibin))
-            return False
+            bins_different.append(ibin)
+
+    if bins_different:
+        to_write = bins_different
+        if len(bins_different) > 10:
+            to_write = bins_different[:5]
+        for ibin in to_write:
+            bin_lo_edge = histo1.GetBinLowEdge(ibin)
+            bin_hi_edge = histo1.GetBinLowEdge(ibin + 1)
+            lines.append("< different content (bin {} ({}, {}) = {})".format(ibin,
+                                                                             bin_lo_edge, bin_hi_edge,
+                                                                             histo1.GetBinContent(ibin)))
+            lines.append("> different content (bin {} ({}, {}) = {})".format(ibin,
+                                                                             bin_lo_edge, bin_hi_edge,
+                                                                             histo2.GetBinContent(ibin)))
+        if (len(bins_different) > 10):
+            lines.append(" other {} different bins".format(len(bins_different) - len(to_write)))
+
+    bins_different = []
+    for ibin in xrange(1, (histo1.GetNbinsX() + 1)):
+        if histo1.GetBinError(ibin) != histo2.GetBinError(ibin):
+            bins_different.append(ibin)
+
+    if bins_different:
+        to_write = bins_different
+        if len(bins_different) > 10:
+            to_write = to_write[:5]
+        for ibin in to_write:
+            bin_lo_edge = histo1.GetBinLowEdge(ibin)
+            bin_hi_edge = histo1.GetBinLowEdge(ibin + 1)
+            lines.append("< different error (bin {} ({}, {}) = {})".format(ibin,
+                                                                           bin_lo_edge, bin_hi_edge,
+                                                                           histo1.GetBinError(ibin)))
+            lines.append("> different error (bin {} ({}, {}) = {})".format(ibin,
+                                                                           bin_lo_edge, bin_hi_edge,
+                                                                           histo2.GetBinError(ibin)))
+        if (len(bins_different) > 10):
+            lines.append(" other {} different bins".format(len(bins_different) - len(to_write)))
+
 
     if histo1.GetEntries() != histo2.GetEntries():
-        print "< {} different entries ({})".format(abs_name(histo1), histo1.GetEntries())
-        print "> {} different entries ({})".format(abs_name(histo2), histo2.GetEntries())
-        return False
+        lines.append("< different entries ({})".format(histo1.GetEntries()))
+        lines.append("> different entries ({})".format(histo2.GetEntries()))
 
-    return True
+    if lines:
+        print "< {}".format(abs_name(histo1))
+        print "> {}".format(abs_name(histo2))
+        print '\n'.join(("  " + l for l in lines))
+
+    return len(lines) > 0
 
 
 def diff_list(list1, list2):
