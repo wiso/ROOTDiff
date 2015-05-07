@@ -151,6 +151,34 @@ def diff_histos(histo1, histo2):
     return len(lines) > 0
 
 
+def diff_tf1(obj1, obj2):
+    if obj1.GetExpFormula() != obj2.GetExpFormula():
+        print "< different formula {}".format(obj1.GetExpFormula())
+        print "> different formula {}".format(obj2.GetExpFormula())
+        return False
+    if obj1.GetNpar() != obj2.GetNpar():
+        print "< different number of parameters {}".format(obj1.GetNpar)
+        print "> different number of parameters {}".format(obj2.GetNpar)
+        return False
+
+    result = True
+    if obj1.GetMaximumX() != obj2.GetMaximumX() or obj1.GetMinimumX() != obj2.GetMinimumX():
+        print "< different range {} - {}".format(obj1.GetMinimumX(), obj1.GetMaximumX())
+        print "> different range {} - {}".format(obj2.GetMinimumX(), obj2.GetMaximumX())
+        result = False
+
+    for ipar in xrange(obj1.GetNpar()):
+        par1 = obj1.GetParameter(ipar)
+        par2 = obj2.GetParameter(ipar)
+        if (par1 != par2):
+            print "< different parameter {} = {}".format(ipar, par1)
+            print "> different parameter {} = {}".format(ipar, par2)
+            result = False
+
+    return result
+    
+
+
 def diff_list(list1, list2):
     result = True
     for obj1, obj2 in zip(list1, list2):
@@ -182,6 +210,9 @@ def diff_obj(obj1, obj2):
 
     if type(obj1) in (ROOT.TH1, ROOT.TH1F, ROOT.TH1D, ROOT.TH1I, ROOT.TProfile):
         return diff_histos(obj1, obj2)
+
+    if type(obj1) is ROOT.TF1:
+        return diff_tf1(obj1, obj2)
 
     if type(obj1) is ROOT.TList:
         return diff_list(obj1, obj2)
