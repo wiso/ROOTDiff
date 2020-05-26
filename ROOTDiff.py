@@ -2,6 +2,8 @@ import ROOT
 import logging
 logging.basicConfig(level=logging.INFO)
 
+# logic: return True if they are different
+
 
 def abs_name(obj):
     try:
@@ -22,15 +24,15 @@ def diff_axis(axis1, axis2):
     if (axis1.GetNbins() != axis2.GetNbins()):
         print("< {} n bins = {}".format(abs_name(axis1), axis1.GetNbins()))
         print("> {} n bins = {}".format(abs_name(axis2), axis2.GetNbins()))
-        return False
+        return True
     for ibin in range(1, (axis1.GetNbins() + 1)):
         if axis1.GetBinLowEdge(ibin) != axis2.GetBinLowEdge(ibin):
             print("< {} different binning (bin {} = {})".format(abs_name(axis1), ibin,
                                                                 axis1.GetBinLowEdge(ibin)))
             print("> {} different binning (bin {} = {})".format(abs_name(axis2), ibin,
                                                                 axis2.GetBinLowEdge(ibin)))
-            return False
-    return True
+            return True
+    return False
 
 
 def diff_graph(graph1, graph2):
@@ -47,7 +49,7 @@ def diff_graph(graph1, graph2):
     if graph1.GetN() != graph2.GetN():
         print("< {} npoints = {}".format(graph1.GetN()))
         print("> {} npoints = {}".format(graph2.GetN()))
-        return False
+        return True
     # TODO(sort the points?)
     for ipoint, (x1, y1, x2, y2) in enumerate(zip(get_x(graph1), get_y(graph1),
                                                   get_x(graph2), get_y(graph2))):
@@ -56,38 +58,39 @@ def diff_graph(graph1, graph2):
                 abs_name(graph1), ipoint, x1, y1))
             print("> {} point {} = ({}, {})".format(
                 abs_name(graph2), ipoint, x2, y2))
-            return False
+            return True
+    return False
 
 
 def diff_graph_asym_errors(graph1, graph2):
-    if not diff_graph(graph1, graph2):
-        return False
+    if diff_graph(graph1, graph2):
+        return True
     for i in range(graph1.GetN()):
         if graph1.GetErrorXhigh(i) != graph2.GetErrorXhigh(i):
             print("< {} point {} error x-up = {}".format(abs_name(graph1),
                                                          i, graph1.GetErrorXhigh(i)))
             print("> {} point {} error x-up = {}".format(abs_name(graph2),
                                                          i, graph2.GetErrorXhigh(i)))
-            return False
+            return True
         if graph1.GetErrorXlow(i) != graph2.GetErrorXlow(i):
             print("< {} point {} error x-low = {}".format(abs_name(graph1),
                                                           i, graph1.GetErrorXlow(i)))
             print("> {} point {} error x-low = {}".format(abs_name(graph2),
                                                           i, graph2.GetErrorXlow(i)))
-            False
+            return True
         if graph1.GetErrorYhigh(i) != graph2.GetErrorYhigh(i):
             print("< {} point {} error y-up = {}".format(abs_name(graph1),
                                                          i, graph1.GetErrorYhigh(i)))
             print("> {} point {} error y-up = {}".format(abs_name(graph2),
                                                          i, graph2.GetErrorYhigh(i)))
-            return False
+            return True
         if graph1.GetErrorYlow(i) != graph2.GetErrorYlow(i):
             print("< {} point {} error y-low = {}".format(abs_name(graph1),
                                                           i, graph1.GetErrorYlow(i)))
             print("> {} point {} error y-low = {}".format(abs_name(graph2),
                                                           i, graph2.GetErrorYlow(i)))
-            False
-        return True
+            return True
+        return False
 
 
 def diff_histos(histo1, histo2):
@@ -208,17 +211,17 @@ def diff_tf1(obj1, obj2):
     if obj1.GetExpFormula() != obj2.GetExpFormula():
         print("< different formula {}".format(obj1.GetExpFormula()))
         print("> different formula {}".format(obj2.GetExpFormula()))
-        return False
+        return True
     if obj1.GetNpar() != obj2.GetNpar():
         print("< different number of parameters {}".format(obj1.GetNpar))
         print("> different number of parameters {}".format(obj2.GetNpar))
-        return False
+        return True
 
-    result = True
+    is_diff = False
     if obj1.GetMaximumX() != obj2.GetMaximumX() or obj1.GetMinimumX() != obj2.GetMinimumX():
         print("< different range {} - {}".format(obj1.GetMinimumX(), obj1.GetMaximumX()))
         print("> different range {} - {}".format(obj2.GetMinimumX(), obj2.GetMaximumX()))
-        result = False
+        is_diff = True
 
     for ipar in range(obj1.GetNpar()):
         par1 = obj1.GetParameter(ipar)
@@ -226,16 +229,16 @@ def diff_tf1(obj1, obj2):
         if (par1 != par2):
             print("< different parameter {} = {}".format(ipar, par1))
             print("> different parameter {} = {}".format(ipar, par2))
-            result = False
+            is_diff = True
 
-    return result
+    return is_diff
 
 
 def diff_list(list1, list2):
-    result = True
+    is_diff = False
     for obj1, obj2 in zip(list1, list2):
-        result &= diff_obj(obj1, obj2)
-    return result
+        is_diff |= diff_obj(obj1, obj2)
+    return is_diff
 
 
 def diff_obj(obj1, obj2):
@@ -270,7 +273,7 @@ def diff_obj(obj1, obj2):
 
     logging.warning("cannot compare %s: type %s not supported",
                     abs_name(obj1), type(obj1))
-    return True
+    return False
 
 
 def diff_directory(directory1, directory2, different_names=False):
@@ -294,14 +297,14 @@ def diff_directory(directory1, directory2, different_names=False):
 
     common_keys = set(keys1).intersection(keys2)
 
-    all_equal = True
+    is_diff = False
     for k in common_keys:
         obj1 = directory1.Get(k)
         obj2 = directory2.Get(k)
 
-        all_equal &= diff_obj(obj1, obj2)
+        is_diff |= diff_obj(obj1, obj2)
 
-    return all_equal
+    return is_diff
 
 
 def diff(first_file, second_file):
@@ -320,10 +323,16 @@ def diff(first_file, second_file):
 
 if __name__ == "__main__":
     import argparse
+    import sys
     parser = argparse.ArgumentParser()
     parser.add_argument("first_file", help="first file")
     parser.add_argument("second_file", help="second file")
 
     args = parser.parse_args()
 
-    diff(args.first_file, args.second_file)
+    is_diff = diff(args.first_file, args.second_file)
+    if is_diff:
+        print("There are differences")
+    else:
+        print("The two files are equivalent")
+    sys.exit(is_diff)
