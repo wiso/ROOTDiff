@@ -162,6 +162,48 @@ def diff_histos(histo1, histo2):
     return len(lines) > 0
 
 
+def diff_histos2d(histo1, histo2):
+    logging.debug("checking %s", histo1.GetName())
+
+    lines = []
+
+    if diff_axis(histo1.GetXaxis(), histo2.GetXaxis()):
+        return True
+    if diff_axis(histo2.GetYaxis(), histo2.GetYaxis()):
+        return True
+
+    bins_different = []
+    for ibin in range(1, (histo1.GetNbinsX() + 1)):
+        for jbin in range(1, (histo1.GetNbinsY() + 1)):
+            if histo1.GetBinContent(ibin, jbin) != histo2.GetBinContent(ibin, jbin):
+                bins_different.append((ibin, jbin))
+
+    if bins_different:
+        to_write = bins_different
+        if len(bins_different) > 10:
+            to_write = bins_different[:5]
+        for ibin, jbin in to_write:
+            lines.append("< different content (bin {} {} = {})".format(
+                ibin, jbin, histo1.GetBinContent(ibin, jbin)))
+            lines.append("> different content (bin {} {}  = {})".format(ibin, jbin,
+                                                                        histo2.GetBinContent(ibin, jbin)))
+        if (len(bins_different) > 10):
+            lines.append(" other {} different bins".format(
+                len(bins_different) - len(to_write)))
+
+    # TODO: errors
+    if histo1.GetEntries() != histo2.GetEntries():
+        lines.append("< different entries ({})".format(histo1.GetEntries()))
+        lines.append("> different entries ({})".format(histo2.GetEntries()))
+
+    if lines:
+        print("< {}".format(abs_name(histo1)))
+        print("> {}".format(abs_name(histo2)))
+        print('\n'.join(("  " + l for l in lines)))
+
+    return len(lines) > 0
+
+
 def diff_tf1(obj1, obj2):
     if obj1.GetExpFormula() != obj2.GetExpFormula():
         print("< different formula {}".format(obj1.GetExpFormula()))
@@ -214,13 +256,11 @@ def diff_obj(obj1, obj2):
     if type(obj1) in (ROOT.TGraphErrors, ROOT.TGraphAsymmErrors):
         return diff_graph_asym_errors(obj1, obj2)
 
-    if issubclass(type(obj1), ROOT.TH2):
-        logging.warning("cannot compare %s: type %s not supported",
-                        abs_name(obj1), type(obj1))
-        return True
-
     if type(obj1) in (ROOT.TH1, ROOT.TH1F, ROOT.TH1D, ROOT.TH1I, ROOT.TProfile):
         return diff_histos(obj1, obj2)
+
+    if type(obj1) in (ROOT.TH2, ROOT.TH2F, ROOT.TH2D, ROOT.TH2I):
+        return diff_histos2d(obj1, obj2)
 
     if type(obj1) is ROOT.TF1:
         return diff_tf1(obj1, obj2)
