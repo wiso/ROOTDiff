@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import ROOT
 import logging
 logging.basicConfig(level=logging.INFO)
