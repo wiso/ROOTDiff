@@ -1,7 +1,6 @@
+import ROOT
 import logging
 logging.basicConfig(level=logging.INFO)
-
-import ROOT
 
 
 def abs_name(obj):
@@ -53,8 +52,10 @@ def diff_graph(graph1, graph2):
     for ipoint, (x1, y1, x2, y2) in enumerate(zip(get_x(graph1), get_y(graph1),
                                                   get_x(graph2), get_y(graph2))):
         if (x1, y1) != (x2, y2):
-            print("< {} point {} = ({}, {})".format(abs_name(graph1), ipoint, x1, y1))
-            print("> {} point {} = ({}, {})".format(abs_name(graph2), ipoint, x2, y2))
+            print("< {} point {} = ({}, {})".format(
+                abs_name(graph1), ipoint, x1, y1))
+            print("> {} point {} = ({}, {})".format(
+                abs_name(graph2), ipoint, x2, y2))
             return False
 
 
@@ -63,38 +64,47 @@ def diff_graph_asym_errors(graph1, graph2):
         return False
     for i in range(graph1.GetN()):
         if graph1.GetErrorXhigh(i) != graph2.GetErrorXhigh(i):
-            print("< {} point {} error x-up = {}".format(abs_name(graph1), i, graph1.GetErrorXhigh(i)))
-            print("> {} point {} error x-up = {}".format(abs_name(graph2), i, graph2.GetErrorXhigh(i)))
+            print("< {} point {} error x-up = {}".format(abs_name(graph1),
+                                                         i, graph1.GetErrorXhigh(i)))
+            print("> {} point {} error x-up = {}".format(abs_name(graph2),
+                                                         i, graph2.GetErrorXhigh(i)))
             return False
         if graph1.GetErrorXlow(i) != graph2.GetErrorXlow(i):
-            print("< {} point {} error x-low = {}".format(abs_name(graph1), i, graph1.GetErrorXlow(i)))
-            print("> {} point {} error x-low = {}".format(abs_name(graph2), i, graph2.GetErrorXlow(i)))
+            print("< {} point {} error x-low = {}".format(abs_name(graph1),
+                                                          i, graph1.GetErrorXlow(i)))
+            print("> {} point {} error x-low = {}".format(abs_name(graph2),
+                                                          i, graph2.GetErrorXlow(i)))
             False
         if graph1.GetErrorYhigh(i) != graph2.GetErrorYhigh(i):
-            print("< {} point {} error y-up = {}".format(abs_name(graph1), i, graph1.GetErrorYhigh(i)))
-            print("> {} point {} error y-up = {}".format(abs_name(graph2), i, graph2.GetErrorYhigh(i)))
+            print("< {} point {} error y-up = {}".format(abs_name(graph1),
+                                                         i, graph1.GetErrorYhigh(i)))
+            print("> {} point {} error y-up = {}".format(abs_name(graph2),
+                                                         i, graph2.GetErrorYhigh(i)))
             return False
         if graph1.GetErrorYlow(i) != graph2.GetErrorYlow(i):
-            print("< {} point {} error y-low = {}".format(abs_name(graph1), i, graph1.GetErrorYlow(i)))
-            print("> {} point {} error y-low = {}".format(abs_name(graph2), i, graph2.GetErrorYlow(i)))
+            print("< {} point {} error y-low = {}".format(abs_name(graph1),
+                                                          i, graph1.GetErrorYlow(i)))
+            print("> {} point {} error y-low = {}".format(abs_name(graph2),
+                                                          i, graph2.GetErrorYlow(i)))
             False
         return True
 
 
 def diff_histos(histo1, histo2):
     logging.debug("checking %s", histo1.GetName())
-    
+
     lines = []
 
     if (histo1.GetNbinsX() != histo2.GetNbinsX()):
         lines.append("< nbins = {}".format(histo1.GetNbinsX()))
         lines.append("> nbins = {}".format(histo2.GetNbinsX()))
-        
-        
+
     for ibin in range(1, (histo1.GetNbinsX() + 1)):
         if histo1.GetBinLowEdge(ibin) != histo2.GetBinLowEdge(ibin):
-            lines.append("< different binning (bin {} = {})".format(ibin, histo1.GetBinLowEdge(ibin)))
-            lines.append("> different binning (bin {} = {})".format(ibin, histo2.GetBinLowEdge(ibin)))
+            lines.append("< different binning (bin {} = {})".format(
+                ibin, histo1.GetBinLowEdge(ibin)))
+            lines.append("> different binning (bin {} = {})".format(
+                ibin, histo2.GetBinLowEdge(ibin)))
 
     bins_different = []
     for ibin in range(1, (histo1.GetNbinsX() + 1)):
@@ -115,7 +125,8 @@ def diff_histos(histo1, histo2):
                                                                              bin_lo_edge, bin_hi_edge,
                                                                              histo2.GetBinContent(ibin)))
         if (len(bins_different) > 10):
-            lines.append(" other {} different bins".format(len(bins_different) - len(to_write)))
+            lines.append(" other {} different bins".format(
+                len(bins_different) - len(to_write)))
 
     bins_different = []
     for ibin in range(1, (histo1.GetNbinsX() + 1)):
@@ -136,8 +147,8 @@ def diff_histos(histo1, histo2):
                                                                            bin_lo_edge, bin_hi_edge,
                                                                            histo2.GetBinError(ibin)))
         if (len(bins_different) > 10):
-            lines.append(" other {} different bins".format(len(bins_different) - len(to_write)))
-
+            lines.append(" other {} different bins".format(
+                len(bins_different) - len(to_write)))
 
     if histo1.GetEntries() != histo2.GetEntries():
         lines.append("< different entries ({})".format(histo1.GetEntries()))
@@ -176,7 +187,6 @@ def diff_tf1(obj1, obj2):
             result = False
 
     return result
-    
 
 
 def diff_list(list1, list2):
@@ -205,7 +215,8 @@ def diff_obj(obj1, obj2):
         return diff_graph_asym_errors(obj1, obj2)
 
     if issubclass(type(obj1), ROOT.TH2):
-        logging.warning("cannot compare %s: type %s not supported", abs_name(obj1), type(obj1))
+        logging.warning("cannot compare %s: type %s not supported",
+                        abs_name(obj1), type(obj1))
         return True
 
     if type(obj1) in (ROOT.TH1, ROOT.TH1F, ROOT.TH1D, ROOT.TH1I, ROOT.TProfile):
@@ -217,14 +228,16 @@ def diff_obj(obj1, obj2):
     if type(obj1) is ROOT.TList:
         return diff_list(obj1, obj2)
 
-    logging.warning("cannot compare %s: type %s not supported", abs_name(obj1), type(obj1))
+    logging.warning("cannot compare %s: type %s not supported",
+                    abs_name(obj1), type(obj1))
     return True
 
 
 def diff_directory(directory1, directory2, different_names=False):
     if different_names:
         # uses for the TFile
-        logging.debug("checking %s and %s", directory1.GetName(), directory2.GetName())
+        logging.debug("checking %s and %s",
+                      directory1.GetName(), directory2.GetName())
     else:
         logging.debug("checking %s", directory1.GetName())
     keys1 = [k.GetName() for k in directory1.GetListOfKeys()]
